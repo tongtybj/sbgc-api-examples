@@ -174,4 +174,28 @@ inline uint8_t SBGC_cmd_execute_menu_send(uint8_t menu_action, SBGC_Parser &pars
 }	
 
 
+// CMD_BOARD_INFO
+typedef struct {
+  uint8_t board_ver;
+  uint16_t firmware_ver;
+  uint8_t debug_mode;
+  uint16_t board_features;
+  uint8_t connection_flags;
+  uint8_t reserved[11];
+} SBGC_cmd_board_info_t;
+
+uint8_t SBGC_cmd_board_info_unpack(SBGC_cmd_board_info_t &p, SerialCommand &cmd);
+
+// CMD_GET_ANGLES
+typedef struct {
+  struct {
+    int16_t angle;
+    int16_t rc_angle;
+    int16_t rc_speed;
+  } angle_data[3];  // ACC and Gyro sensor data (with calibration) for current IMU (see cur_imu
+} SBGC_cmd_get_angles_t;
+
+uint8_t SBGC_cmd_get_angle_unpack(SBGC_cmd_get_angles_t &p, SerialCommand &cmd);
+#define ANGLE_SCALE 0.02197265625f
+
 #endif
