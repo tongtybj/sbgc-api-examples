@@ -339,10 +339,9 @@ public:
       if(wait || com_obj->getOutEmptySpace() >= 1 + SBGC_CMD_NON_PAYLOAD_BYTES) {
         com_obj->writeByte(SBGC_CMD_START_BYTE); // protocol-specific start marker
         com_obj->writeByte(cmd_id); // command id
-        com_obj->writeByte(1); // data body length
-        com_obj->writeByte(cmd_id + 1); // header checksum
-        com_obj->writeByte(1); // write data
-        com_obj->writeByte(1); // data checksum
+        com_obj->writeByte(0); // data body length
+        com_obj->writeByte(cmd_id + 0); // header checksum
+        com_obj->writeByte(0); // data checksum
         return 0;
       } else {
         return PARSER_ERROR_BUFFER_IS_FULL;
@@ -351,6 +350,25 @@ public:
       return PARSER_ERROR_WRONG_CMD_SIZE;
     }
   }
+
+  inline uint8_t send_param_read_cmd(uint8_t profile_id, uint8_t wait = 1) {
+    if(com_obj != NULL && 1 <= (SBGC_CMD_MAX_BYTES - SBGC_CMD_NON_PAYLOAD_BYTES)) {
+      if(wait || com_obj->getOutEmptySpace() >= 1 + SBGC_CMD_NON_PAYLOAD_BYTES) {
+        com_obj->writeByte(SBGC_CMD_START_BYTE); // protocol-specific start marker
+        com_obj->writeByte(SBGC_CMD_READ_PARAMS); // command id
+        com_obj->writeByte(1); // data body length
+        com_obj->writeByte(SBGC_CMD_READ_PARAMS + 1); // header checksum
+        com_obj->writeByte(profile_id); // data checksum
+        com_obj->writeByte(profile_id); // data checksum
+        return 0;
+      } else {
+        return PARSER_ERROR_BUFFER_IS_FULL;
+      }
+    } else {
+      return PARSER_ERROR_WRONG_CMD_SIZE;
+    }
+  }
+
 
   /*
    * Get parsing errors counter

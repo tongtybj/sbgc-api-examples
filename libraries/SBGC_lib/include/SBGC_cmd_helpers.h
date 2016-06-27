@@ -7,7 +7,8 @@
 	
 	See license info in the SBGC.h
 */
-
+#include <stdio.h>
+#include <iostream>
 #ifndef __SBGC_CMD_HELPERS__
 #define __SBGC_CMD_HELPERS__
 
@@ -197,5 +198,100 @@ typedef struct {
 
 uint8_t SBGC_cmd_get_angle_unpack(SBGC_cmd_get_angles_t &p, SerialCommand &cmd);
 #define ANGLE_SCALE 0.02197265625f
+
+
+// CMD_REALTIME_DATA
+typedef struct {
+  struct {
+    int16_t acc_data;
+    int16_t gyro_data;
+  } sensor_data[3];  // ACC and Gyro sensor data (with calibration) for current IMU (see cur_imu field)
+  uint16_t serial_error_cnt; // counter for communication errors
+  uint16_t system_error; // system error flags, defined in SBGC_SYS_ERR_XX 
+  uint8_t reserved1[4];
+  int16_t rc_raw_data[SBGC_RC_NUM_CHANNELS]; // RC signal in 1000..2000 range for ROLL, PITCH, YAW, CMD, EXT_ROLL, EXT_PITCH channels
+  int16_t imu_angle[3]; // ROLL, PITCH, YAW Euler angles of a camera, 16384/360 degrees
+  int16_t rc_angle[3]; // ROLL, PITCH, YAW Euler angles of a camera, 16384/360 degrees
+  uint16_t cycle_time_us; // cycle time in us. Normally should be 800us
+  uint16_t i2c_error_count; // I2C errors counter
+  uint8_t error_code;
+  uint16_t battery_voltage; // units 0.01 V
+  uint8_t other_flags; // bit0: motor ON/OFF state;  bits1..7: reserved
+  uint8_t cur_profile; // active profile number starting from 0
+  uint8_t motor_power[3];
+} SBGC_cmd_realtime_data_v1_t;
+
+uint8_t SBGC_cmd_realtime_data_v1_unpack(SBGC_cmd_realtime_data_v1_t &p, SerialCommand &cmd);
+
+
+// CMD_PARAM_DATA => the order is wrong!!!!
+typedef struct {
+  uint8_t profile_id;
+  struct {
+    uint8_t p;
+    uint8_t i;
+    uint8_t d;
+    uint8_t power;
+    uint8_t invert;
+    uint8_t poles;
+  } base_param[3];
+  uint8_t acc_limiter;
+  uint8_t ext_fc_gain[2]; //roll & pitch
+  struct {
+    int16_t rc_min_angle;
+    int16_t rc_max_angle;
+    uint8_t rc_mode;
+    uint8_t rc_lpf;
+    uint8_t rc_speed;
+    uint8_t rc_follow;
+  } rc_param[3];
+  uint8_t gyro_trust;
+  uint8_t use_model;
+  uint8_t pwm_freq;
+  uint8_t serial_speed;
+  int8_t rc_trim[3];
+  uint8_t rc_deadband;
+  uint8_t rc_expo_rate;
+  uint8_t rc_virt_mode;
+  uint8_t rc_map[6]; // roll, pitch, yaw, cmd, fc_roll, fc_pitch
+  uint8_t rc_mix_fc[2]; //roll, pitch
+  uint8_t follow_mode;
+  uint8_t follow_deadband;
+  uint8_t follow_expo_rate;
+  int8_t follow_offset[3];
+  int8_t axis_top;
+  int8_t axis_right;
+  uint8_t gyro_lpf;
+  uint8_t gyro_sens;
+  uint8_t i2c_internal_pullups;
+  uint8_t skip_gyro_calib;
+  uint8_t rc_cmd_low;
+  uint8_t rc_cmd_mid;
+  uint8_t rc_cmd_high;
+  uint8_t menu_cmd[5];
+  uint8_t menu_cmd_long;
+  uint8_t output[3];
+  int16_t bat_thresh_alarm;
+  int16_t bat_thresh_motors;
+  int16_t bat_comp_ref;
+  uint8_t beeper_modes;
+  uint8_t follow_roll_mix_start;
+  uint8_t follow_roll_mix_range;
+  uint8_t booster_power[3];
+  uint8_t follow_speed[3];
+  uint8_t frame_angle_from_motors;
+  uint8_t cur_profile_id;
+} SBGC_cmd_param_t;
+
+uint8_t SBGC_cmd_param_unpack(SBGC_cmd_param_t &p, SerialCommand &cmd);
+uint8_t SBGC_cmd_param_pack(SBGC_cmd_param_t &p, SerialCommand &cmd);
+inline uint8_t SBGC_cmd_param_send(SBGC_cmd_param_t &p, SBGC_Parser &parser) {
+  SerialCommand cmd;
+  SBGC_cmd_param_pack(p, cmd);
+  // for(int i = 0; i < cmd.len; i ++)
+  //   printf("No.%d: %x\n", i + 1, cmd.data[i]);
+  return parser.send_cmd(cmd);
+}
+
 
 #endif
